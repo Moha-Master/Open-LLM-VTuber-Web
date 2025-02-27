@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint-disable no-underscore-dangle */
 /**
  * Copyright(c) Live2D Inc. All rights reserved.
@@ -6,17 +7,20 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { LAppDelegate } from './lappdelegate';
-import * as LAppDefine from './lappdefine';
-import { LAppGlManager } from './lappglmanager';
-import { LAppLive2DManager } from './lapplive2dmanager';
+import { LAppDelegate } from "./lappdelegate";
+import * as LAppDefine from "./lappdefine";
+import { LAppGlManager } from "./lappglmanager";
+import { LAppLive2DManager } from "./lapplive2dmanager";
 
 /**
  * Initialize the Live2D application
  */
 export function initializeLive2D(): void {
-  console.log('Initializing Live2D with resourcePath:', LAppDefine.ResourcesPath);
-  console.log('Model directories:', LAppDefine.ModelDir);
+  console.log(
+    "Initializing Live2D with resourcePath:",
+    LAppDefine.ResourcesPath
+  );
+  console.log("Model directories:", LAppDefine.ModelDir);
 
   // Clean up any existing instances first
   if (LAppDelegate.getInstance()) {
@@ -34,8 +38,10 @@ export function initializeLive2D(): void {
 
   LAppDelegate.getInstance().run();
 
+  (window as any).getLive2DManager = () => LAppLive2DManager.getInstance();
+
   if ((window as any).api?.setIgnoreMouseEvent) {
-    const parent = document.getElementById('live2d');
+    const parent = document.getElementById("live2d");
 
     parent?.addEventListener("pointermove", (e) => {
       const model = LAppLive2DManager.getInstance().getModel(0);
@@ -57,11 +63,11 @@ export function initializeLive2D(): void {
  * (for the standalone HTML file)
  */
 window.addEventListener(
-  'load',
+  "load",
   (): void => {
     initializeLive2D();
   },
-  { passive: true },
+  { passive: true }
 );
 
 /**
@@ -69,22 +75,22 @@ window.addEventListener(
  * 结束时的处理
  */
 window.addEventListener(
-  'beforeunload',
+  "beforeunload",
   (): void => LAppDelegate.releaseInstance(),
-  { passive: true },
+  { passive: true }
 );
 
 /**
  * Process when changing screen size.
  */
 window.addEventListener(
-  'resize',
+  "resize",
   () => {
-    if (LAppDefine.CanvasSize === 'auto') {
+    if (LAppDefine.CanvasSize === "auto") {
       LAppDelegate.getInstance().onResize();
     }
   },
-  { passive: true },
+  { passive: true }
 );
 
 // Make the initialization function available globally

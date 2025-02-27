@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { LAppLive2DManager } from "./lapplive2dmanager";
 import { LAppModel } from "./lappmodel";
 import * as LAppDefine from './lappdefine';

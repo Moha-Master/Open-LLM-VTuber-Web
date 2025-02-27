@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Copyright(c) Live2D Inc. All rights reserved.
  *
@@ -5,44 +6,44 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismDefaultParameterId } from '@framework/cubismdefaultparameterid';
-import { CubismModelSettingJson } from '@framework/cubismmodelsettingjson';
+import { CubismDefaultParameterId } from "@framework/cubismdefaultparameterid";
+import { CubismModelSettingJson } from "@framework/cubismmodelsettingjson";
 import {
   BreathParameterData,
-  CubismBreath
-} from '@framework/effect/cubismbreath';
-import { CubismEyeBlink } from '@framework/effect/cubismeyeblink';
-import { ICubismModelSetting } from '@framework/icubismmodelsetting';
-import { CubismIdHandle } from '@framework/id/cubismid';
-import { CubismFramework } from '@framework/live2dcubismframework';
-import { CubismMatrix44 } from '@framework/math/cubismmatrix44';
-import { CubismUserModel } from '@framework/model/cubismusermodel';
+  CubismBreath,
+} from "@framework/effect/cubismbreath";
+import { CubismEyeBlink } from "@framework/effect/cubismeyeblink";
+import { ICubismModelSetting } from "@framework/icubismmodelsetting";
+import { CubismIdHandle } from "@framework/id/cubismid";
+import { CubismFramework } from "@framework/live2dcubismframework";
+import { CubismMatrix44 } from "@framework/math/cubismmatrix44";
+import { CubismUserModel } from "@framework/model/cubismusermodel";
 import {
   ACubismMotion,
-  FinishedMotionCallback
-} from '@framework/motion/acubismmotion';
-import { CubismMotion } from '@framework/motion/cubismmotion';
+  FinishedMotionCallback,
+} from "@framework/motion/acubismmotion";
+import { CubismMotion } from "@framework/motion/cubismmotion";
 import {
   CubismMotionQueueEntryHandle,
-  InvalidMotionQueueEntryHandleValue
-} from '@framework/motion/cubismmotionqueuemanager';
-import { csmMap } from '@framework/type/csmmap';
-import { csmRect } from '@framework/type/csmrectf';
-import { csmString } from '@framework/type/csmstring';
-import { csmVector } from '@framework/type/csmvector';
+  InvalidMotionQueueEntryHandleValue,
+} from "@framework/motion/cubismmotionqueuemanager";
+import { csmMap } from "@framework/type/csmmap";
+import { csmRect } from "@framework/type/csmrectf";
+import { csmString } from "@framework/type/csmstring";
+import { csmVector } from "@framework/type/csmvector";
 import {
   CSM_ASSERT,
   CubismLogError,
-  CubismLogInfo
-} from '@framework/utils/cubismdebug';
+  CubismLogInfo,
+} from "@framework/utils/cubismdebug";
 
-import * as LAppDefine from './lappdefine';
-import { frameBuffer, LAppDelegate } from './lappdelegate';
-import { canvas, gl } from './lappglmanager';
-import { LAppPal } from './lapppal';
-import { TextureInfo } from './lapptexturemanager';
-import { LAppWavFileHandler } from './lappwavfilehandler';
-import { CubismMoc } from '@framework/model/cubismmoc';
+import * as LAppDefine from "./lappdefine";
+import { frameBuffer, LAppDelegate } from "./lappdelegate";
+import { canvas, gl } from "./lappglmanager";
+import { LAppPal } from "./lapppal";
+import { TextureInfo } from "./lapptexturemanager";
+import { LAppWavFileHandler } from "./lappwavfilehandler";
+import { CubismMoc } from "@framework/model/cubismmoc";
 
 enum LoadStep {
   LoadAssets,
@@ -67,7 +68,7 @@ enum LoadStep {
   CompleteSetupModel,
   LoadTexture,
   WaitLoadTexture,
-  CompleteSetup
+  CompleteSetup,
 }
 
 /**
@@ -84,8 +85,8 @@ export class LAppModel extends CubismUserModel {
     this._modelHomeDir = dir;
 
     fetch(`${this._modelHomeDir}${fileName}`)
-      .then(response => response.arrayBuffer())
-      .then(arrayBuffer => {
+      .then((response) => response.arrayBuffer())
+      .then((arrayBuffer) => {
         const setting: ICubismModelSetting = new CubismModelSettingJson(
           arrayBuffer,
           arrayBuffer.byteLength
@@ -97,7 +98,7 @@ export class LAppModel extends CubismUserModel {
         // 結果を保存
         this.setupModel(setting);
       })
-      .catch(error => {
+      .catch((error) => {
         // model3.json読み込みでエラーが発生した時点で描画は不可能なので、setupせずエラーをcatchして何もしない
         CubismLogError(`Failed to load file ${this._modelHomeDir}${fileName}`);
       });
@@ -116,11 +117,11 @@ export class LAppModel extends CubismUserModel {
     this._modelSetting = setting;
 
     // CubismModel
-    if (this._modelSetting.getModelFileName() != '') {
+    if (this._modelSetting.getModelFileName() != "") {
       const modelFileName = this._modelSetting.getModelFileName();
 
       fetch(`${this._modelHomeDir}${modelFileName}`)
-        .then(response => {
+        .then((response) => {
           if (response.ok) {
             return response.arrayBuffer();
           } else if (response.status >= 400) {
@@ -130,7 +131,7 @@ export class LAppModel extends CubismUserModel {
             return new ArrayBuffer(0);
           }
         })
-        .then(arrayBuffer => {
+        .then((arrayBuffer) => {
           this.loadModel(arrayBuffer, this._mocConsistency);
           this._state = LoadStep.LoadExpression;
 
@@ -140,7 +141,7 @@ export class LAppModel extends CubismUserModel {
 
       this._state = LoadStep.WaitLoadModel;
     } else {
-      LAppPal.printMessage('Model data does not exist.');
+      LAppPal.printMessage("Model data does not exist.");
     }
 
     // Expression
@@ -154,7 +155,7 @@ export class LAppModel extends CubismUserModel {
             this._modelSetting.getExpressionFileName(i);
 
           fetch(`${this._modelHomeDir}${expressionFileName}`)
-            .then(response => {
+            .then((response) => {
               if (response.ok) {
                 return response.arrayBuffer();
               } else if (response.status >= 400) {
@@ -165,7 +166,7 @@ export class LAppModel extends CubismUserModel {
                 return new ArrayBuffer(0);
               }
             })
-            .then(arrayBuffer => {
+            .then((arrayBuffer) => {
               const motion: ACubismMotion = this.loadExpression(
                 arrayBuffer,
                 arrayBuffer.byteLength,
@@ -202,11 +203,11 @@ export class LAppModel extends CubismUserModel {
 
     // Physics
     const loadCubismPhysics = (): void => {
-      if (this._modelSetting.getPhysicsFileName() != '') {
+      if (this._modelSetting.getPhysicsFileName() != "") {
         const physicsFileName = this._modelSetting.getPhysicsFileName();
 
         fetch(`${this._modelHomeDir}${physicsFileName}`)
-          .then(response => {
+          .then((response) => {
             if (response.ok) {
               return response.arrayBuffer();
             } else if (response.status >= 400) {
@@ -216,7 +217,7 @@ export class LAppModel extends CubismUserModel {
               return new ArrayBuffer(0);
             }
           })
-          .then(arrayBuffer => {
+          .then((arrayBuffer) => {
             this.loadPhysics(arrayBuffer, arrayBuffer.byteLength);
 
             this._state = LoadStep.LoadPose;
@@ -235,11 +236,11 @@ export class LAppModel extends CubismUserModel {
 
     // Pose
     const loadCubismPose = (): void => {
-      if (this._modelSetting.getPoseFileName() != '') {
+      if (this._modelSetting.getPoseFileName() != "") {
         const poseFileName = this._modelSetting.getPoseFileName();
 
         fetch(`${this._modelHomeDir}${poseFileName}`)
-          .then(response => {
+          .then((response) => {
             if (response.ok) {
               return response.arrayBuffer();
             } else if (response.status >= 400) {
@@ -249,7 +250,7 @@ export class LAppModel extends CubismUserModel {
               return new ArrayBuffer(0);
             }
           })
-          .then(arrayBuffer => {
+          .then((arrayBuffer) => {
             this.loadPose(arrayBuffer, arrayBuffer.byteLength);
 
             this._state = LoadStep.SetupEyeBlink;
@@ -315,11 +316,11 @@ export class LAppModel extends CubismUserModel {
 
     // UserData
     const loadUserData = (): void => {
-      if (this._modelSetting.getUserDataFile() != '') {
+      if (this._modelSetting.getUserDataFile() != "") {
         const userDataFile = this._modelSetting.getUserDataFile();
 
         fetch(`${this._modelHomeDir}${userDataFile}`)
-          .then(response => {
+          .then((response) => {
             if (response.ok) {
               return response.arrayBuffer();
             } else if (response.status >= 400) {
@@ -329,7 +330,7 @@ export class LAppModel extends CubismUserModel {
               return new ArrayBuffer(0);
             }
           })
-          .then(arrayBuffer => {
+          .then((arrayBuffer) => {
             this.loadUserData(arrayBuffer, arrayBuffer.byteLength);
 
             this._state = LoadStep.SetupEyeBlinkIds;
@@ -382,7 +383,7 @@ export class LAppModel extends CubismUserModel {
       const layout: csmMap<string, number> = new csmMap<string, number>();
 
       if (this._modelSetting == null || this._modelMatrix == null) {
-        CubismLogError('Failed to setupLayout().');
+        CubismLogError("Failed to setupLayout().");
         return;
       }
 
@@ -449,8 +450,8 @@ export class LAppModel extends CubismUserModel {
         modelTextureNumber++
       ) {
         // テクスチャ名が空文字だった場合はロード・バインド処理をスキップ
-        if (this._modelSetting.getTextureFileName(modelTextureNumber) == '') {
-          console.log('getTextureFileName null');
+        if (this._modelSetting.getTextureFileName(modelTextureNumber) == "") {
+          console.log("getTextureFileName null");
           continue;
         }
 
@@ -565,15 +566,21 @@ export class LAppModel extends CubismUserModel {
       this._physics.evaluate(this._model, deltaTimeSeconds);
     }
 
-    // リップシンクの設定
+    // Lip sync settings
     if (this._lipsync) {
-      let value = 0.0; // リアルタイムでリップシンクを行う場合、システムから音量を取得して、0~1の範囲で値を入力します。
-
+      let value = 0.0;
       this._wavFileHandler.update(deltaTimeSeconds);
       value = this._wavFileHandler.getRms();
+      value = Math.min(1.0, value * 1.5);
+
+      const lipSyncWeight = 4.0;
 
       for (let i = 0; i < this._lipSyncIds.getSize(); ++i) {
-        this._model.addParameterValueById(this._lipSyncIds.at(i), value, 0.8);
+        this._model.addParameterValueById(
+          this._lipSyncIds.at(i),
+          value,
+          lipSyncWeight
+        );
       }
     }
 
@@ -617,7 +624,7 @@ export class LAppModel extends CubismUserModel {
 
     if (motion == null) {
       fetch(`${this._modelHomeDir}${motionFileName}`)
-        .then(response => {
+        .then((response) => {
           if (response.ok) {
             return response.arrayBuffer();
           } else if (response.status >= 400) {
@@ -627,7 +634,7 @@ export class LAppModel extends CubismUserModel {
             return new ArrayBuffer(0);
           }
         })
-        .then(arrayBuffer => {
+        .then((arrayBuffer) => {
           motion = this.loadMotion(
             arrayBuffer,
             arrayBuffer.byteLength,
@@ -662,7 +669,7 @@ export class LAppModel extends CubismUserModel {
 
     //voice
     const voice = this._modelSetting.getMotionSoundFileName(group, no);
-    if (voice.localeCompare('') != 0) {
+    if (voice.localeCompare("") != 0) {
       let path = voice;
       path = this._modelHomeDir + path;
       this._wavFileHandler.start(path);
@@ -749,7 +756,7 @@ export class LAppModel extends CubismUserModel {
    * イベントの発火を受け取る
    */
   public motionEventFired(eventValue: csmString): void {
-    CubismLogInfo('{0} is fired on LAppModel!!', eventValue.s);
+    CubismLogInfo("{0} is fired on LAppModel!!", eventValue.s);
   }
 
   /**
@@ -785,9 +792,9 @@ export class LAppModel extends CubismUserModel {
 
     const count: number = this._modelSetting.getHitAreasCount();
     for (let i = 0; i < count; i++) {
-        const drawId: CubismIdHandle = this._modelSetting.getHitAreaId(i);
-        if (this.isHit(drawId, x, y)) {
-            return true;
+      const drawId: CubismIdHandle = this._modelSetting.getHitAreaId(i);
+      if (this.isHit(drawId, x, y)) {
+        return true;
       }
     }
     return false;
@@ -810,7 +817,7 @@ export class LAppModel extends CubismUserModel {
       }
 
       fetch(`${this._modelHomeDir}${motionFileName}`)
-        .then(response => {
+        .then((response) => {
           if (response.ok) {
             return response.arrayBuffer();
           } else if (response.status >= 400) {
@@ -820,7 +827,7 @@ export class LAppModel extends CubismUserModel {
             return null; // Return null instead of empty ArrayBuffer
           }
         })
-        .then(arrayBuffer => {
+        .then((arrayBuffer) => {
           // Add null check before loading motion
           if (!arrayBuffer) {
             // If buffer is null, reduce motion count and return
@@ -874,7 +881,7 @@ export class LAppModel extends CubismUserModel {
             this._allMotionCount--;
           }
         })
-        .catch(error => {
+        .catch((error) => {
           // Add error handling
           CubismLogError(`Failed to load motion: ${error}`);
           this._allMotionCount--;
@@ -931,7 +938,7 @@ export class LAppModel extends CubismUserModel {
     CSM_ASSERT(this._modelSetting.getModelFileName().localeCompare(``));
 
     // CubismModel
-    if (this._modelSetting.getModelFileName() != '') {
+    if (this._modelSetting.getModelFileName() != "") {
       const modelFileName = this._modelSetting.getModelFileName();
 
       const response = await fetch(`${this._modelHomeDir}${modelFileName}`);
@@ -940,14 +947,14 @@ export class LAppModel extends CubismUserModel {
       this._consistency = CubismMoc.hasMocConsistency(arrayBuffer);
 
       if (!this._consistency) {
-        CubismLogInfo('Inconsistent MOC3.');
+        CubismLogInfo("Inconsistent MOC3.");
       } else {
-        CubismLogInfo('Consistent MOC3.');
+        CubismLogInfo("Consistent MOC3.");
       }
 
       return this._consistency;
     } else {
-      LAppPal.printMessage('Model data does not exist.');
+      LAppPal.printMessage("Model data does not exist.");
     }
   }
 

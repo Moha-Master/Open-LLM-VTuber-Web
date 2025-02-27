@@ -1,9 +1,11 @@
+/* eslint-disable func-names */
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { useRef, useEffect } from 'react';
 import { useAiState } from '@/context/ai-state-context';
 import { useSubtitle } from '@/context/subtitle-context';
 import { useChatHistory } from '@/context/chat-history-context';
 import { audioTaskQueue } from '@/utils/task-queue';
-import { useLive2DModel } from '@/context/live2d-model-context';
 import { toaster } from '@/components/ui/toaster';
 import { useWebSocket } from '@/context/websocket-context';
 import { DisplayText } from '@/services/websocket-service';
@@ -18,16 +20,18 @@ interface AudioTaskOptions {
   forwarded?: boolean
 }
 
+/**
+ * Custom hook for handling audio playback tasks with Live2D lip sync
+ */
 export const useAudioTask = () => {
   const { aiState, backendSynthComplete, setBackendSynthComplete } = useAiState();
   const { setSubtitleText } = useSubtitle();
   const { appendResponse, appendAIMessage } = useChatHistory();
-  const { currentModel } = useLive2DModel();
   const { sendMessage } = useWebSocket();
 
+  // Keep track of state in a ref to avoid stale closures
   const stateRef = useRef({
     aiState,
-    currentModel,
     setSubtitleText,
     appendResponse,
     appendAIMessage,
@@ -35,21 +39,24 @@ export const useAudioTask = () => {
 
   stateRef.current = {
     aiState,
-    currentModel,
     setSubtitleText,
     appendResponse,
     appendAIMessage,
   };
 
+  /**
+   * Handle audio playback with Live2D lip sync
+   * @param options Audio task options including base64 audio data
+   */
   const handleAudioPlayback = (options: AudioTaskOptions): Promise<void> => new Promise((resolve) => {
     const {
       aiState: currentAiState,
-      currentModel: model,
       setSubtitleText: updateSubtitle,
       appendResponse: appendText,
       appendAIMessage: appendAI,
     } = stateRef.current;
 
+    // Check if playback is blocked
     if (currentAiState === 'interrupted') {
       console.error('Audio playback blocked. State:', currentAiState);
       resolve();
@@ -58,6 +65,7 @@ export const useAudioTask = () => {
 
     const { audioBase64, displayText, expressions, forwarded } = options;
 
+    // Handle display text updates
     if (displayText) {
       appendText(displayText.text);
       appendAI(displayText.text, displayText.name, displayText.avatar);
@@ -73,45 +81,94 @@ export const useAudioTask = () => {
       }
     }
 
-    if (!model) {
-      console.error('Model not initialized');
-      resolve();
-      return;
-    }
-
     try {
-      if (expressions?.[0] !== undefined) {
-        model.expression(expressions[0]);
-      }
-
-      let isFinished = false;
+      // Create audio element and set up base64 data
       if (audioBase64) {
-        model.speak(`data:audio/wav;base64,${audioBase64}`, {
-          onFinish: () => {
-            console.log("Voiceline is over");
-            isFinished = true;
-            resolve();
-          },
-          onError: (error) => {
-            console.error("Audio playback error:", error);
-            isFinished = true;
-            resolve();
-          },
+        const audioDataUrl = `data:audio/wav;base64,${audioBase64}`;
+
+        // Get Live2D manager instance
+        const live2dManager = (window as any).getLive2DManager?.();
+        if (!live2dManager) {
+          console.error('Live2D manager not found');
+          resolve();
+          return;
+        }
+
+        const model = live2dManager.getModel(0);
+        if (!model) {
+          console.error('Live2D model not found');
+          resolve();
+          return;
+        }
+
+        // Set expression if provided
+        // if (expressions?.[0] !== undefined) {
+        //   model.setExpression(expressions[0]);
+        // }
+
+        // Create and set up audio element
+        const audio = new Audio(audioDataUrl);
+        let isFinished = false;
+
+        // Apply enhanced lip sync to all models
+        const lipSyncScale = 2.0; // Increase sensitivity for all models
+
+        audio.addEventListener('canplaythrough', () => {
+          console.log('Starting audio playback with lip sync');
+          audio.play();
+
+          // Start lip sync
+          if (model._wavFileHandler) {
+            // Initialize enhanced handling for all models
+            if (!model._wavFileHandler._initialized) {
+              console.log('Applying enhanced lip sync handling for model');
+              model._wavFileHandler._initialized = true;
+
+              // Create custom update function to enhance lip sync effect
+              const originalUpdate = model._wavFileHandler.update.bind(model._wavFileHandler);
+              model._wavFileHandler.update = function (deltaTimeSeconds: number) {
+                const result = originalUpdate(deltaTimeSeconds);
+                // Amplify RMS value to make mouth movements more pronounced
+                this._lastRms = Math.min(2.0, this._lastRms * lipSyncScale);
+                return result;
+              };
+            }
+
+            model._wavFileHandler.start(audioDataUrl);
+          } else {
+            console.warn('Wave file handler not available for lip sync');
+          }
         });
+
+        audio.addEventListener('ended', () => {
+          console.log("Audio playback completed");
+          isFinished = true;
+          resolve();
+        });
+
+        audio.addEventListener('error', (error) => {
+          console.error("Audio playback error:", error);
+          isFinished = true;
+          resolve();
+        });
+
+        // Load the audio
+        audio.load();
+
+        // Check playback status
+        const checkFinished = () => {
+          if (!isFinished) {
+            setTimeout(checkFinished, 100);
+          }
+        };
+        checkFinished();
       } else {
         resolve();
       }
-
-      const checkFinished = () => {
-        if (!isFinished) {
-          setTimeout(checkFinished, 100);
-        }
-      };
-      checkFinished();
     } catch (error) {
-      console.error('Speak function error:', error);
+      console.error('Audio playback error:', error);
       toaster.create({
-        title: `Speak function error: ${error}`,
+        title: `Audio playback error: ${error}`,
         type: "error",
         duration: 2000,
       });
@@ -119,6 +176,7 @@ export const useAudioTask = () => {
     }
   });
 
+  // Handle backend synthesis completion
   useEffect(() => {
     let isMounted = true;
 
@@ -137,6 +195,10 @@ export const useAudioTask = () => {
     };
   }, [backendSynthComplete, sendMessage, setBackendSynthComplete]);
 
+  /**
+   * Add a new audio task to the queue
+   * @param options Audio task options
+   */
   const addAudioTask = async (options: AudioTaskOptions) => {
     const { aiState: currentState } = stateRef.current;
 

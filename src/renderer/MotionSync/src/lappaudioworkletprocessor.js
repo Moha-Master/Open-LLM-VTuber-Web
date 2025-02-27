@@ -28,10 +28,14 @@ class LAppAudioWorkletProcessor extends AudioWorkletProcessor {
 
     let inputArray = inputs[0];
     let output = outputs[0];
-    for (let currentChannel = 0; currentChannel < inputArray.length; ++currentChannel) {
+    for (
+      let currentChannel = 0;
+      currentChannel < inputArray.length;
+      ++currentChannel
+    ) {
       let inputChannel = inputArray[currentChannel];
       let outputChannel = output[currentChannel];
-      for (let i = 0; i < inputChannel.length; ++i){
+      for (let i = 0; i < inputChannel.length; ++i) {
         outputChannel[i] = inputChannel[i];
       }
     }
@@ -40,4 +44,4 @@ class LAppAudioWorkletProcessor extends AudioWorkletProcessor {
   }
 }
 
-registerProcessor('lappaudioworkletprocessor', LAppAudioWorkletProcessor);
+registerProcessor("lappaudioworkletprocessor", LAppAudioWorkletProcessor);

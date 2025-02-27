@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { memo, useRef } from "react";
 import { useLive2DConfig } from "@/context/live2d-config-context";
@@ -16,13 +17,9 @@ export const Live2D = memo(({ isPet }: Live2DProps): JSX.Element => {
   const { position, handlers } = useLive2DModel({ isPet, modelInfo });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Add resize hook
+  // Setup hooks
   useLive2DResize({ containerRef, isPet, modelInfo });
-
-  // Register IPC handlers
   useIpcHandlers({ isPet });
-
-  // Export these hooks for global use
   useInterrupt();
   useAudioTask();
 

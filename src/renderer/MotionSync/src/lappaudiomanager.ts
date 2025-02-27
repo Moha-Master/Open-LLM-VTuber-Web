@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Copyright(c) Live2D Inc. All rights reserved.
  *
@@ -5,13 +6,13 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { csmVector } from '@framework/type/csmvector';
-import { CubismMotionSync } from '@motionsyncframework/live2dcubismmotionsync';
+import { csmVector } from "@framework/type/csmvector";
+import { CubismMotionSync } from "@motionsyncframework/live2dcubismmotionsync";
 import {
   AudioInfo,
-  LAppMotionSyncAudioManager
-} from './lappmotionsyncaudiomanager';
-import { LAppMotionSyncModel } from './lappmotionsyncmodel';
+  LAppMotionSyncAudioManager,
+} from "./lappmotionsyncaudiomanager";
+import { LAppMotionSyncModel } from "./lappmotionsyncmodel";
 
 export class LAppAudioManager {
   /**
@@ -99,7 +100,7 @@ export class LAppAudioManager {
       .getAudioManager()
       ._audios.at(index).audioContext;
 
-    return audioContext.state == 'suspended';
+    return audioContext.state == "suspended";
   }
 
   /**

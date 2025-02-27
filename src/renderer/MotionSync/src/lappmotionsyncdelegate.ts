@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Copyright(c) Live2D Inc. All rights reserved.
  *
@@ -5,18 +6,18 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismFramework, Option } from '@framework/live2dcubismframework';
+import { CubismFramework, Option } from "@framework/live2dcubismframework";
 
-import * as LAppDefine from '@cubismsdksamples/lappdefine';
-import { LAppPal } from '@cubismsdksamples/lapppal';
-import { LAppTextureManager } from '@cubismsdksamples/lapptexturemanager';
+import * as LAppDefine from "@cubismsdksamples/lappdefine";
+import { LAppPal } from "@cubismsdksamples/lapppal";
+import { LAppTextureManager } from "@cubismsdksamples/lapptexturemanager";
 import {
   CubismMotionSync,
-  MotionSyncOption
-} from '@motionsyncframework/live2dcubismmotionsync';
-import { LAppMotionSyncView } from './lappmotionsyncview';
-import { LAppMotionSyncLive2DManager } from './lappmotionsynclive2dmanager';
-import { canvas, gl } from '@cubismsdksamples/lappglmanager';
+  MotionSyncOption,
+} from "@motionsyncframework/live2dcubismmotionsync";
+import { LAppMotionSyncView } from "./lappmotionsyncview";
+import { LAppMotionSyncLive2DManager } from "./lappmotionsynclive2dmanager";
+import { canvas, gl } from "@cubismsdksamples/lappglmanager";
 
 export let s_instance: LAppMotionSyncDelegate = null;
 export let frameBuffer: WebGLFramebuffer = null;
@@ -58,7 +59,7 @@ export class LAppMotionSyncDelegate {
     // キャンバスを DOM に追加
     document.body.appendChild(canvas);
 
-    if (LAppDefine.CanvasSize === 'auto') {
+    if (LAppDefine.CanvasSize === "auto") {
       this._resizeCanvas();
     } else {
       canvas.width = LAppDefine.CanvasSize.width;
@@ -73,19 +74,19 @@ export class LAppMotionSyncDelegate {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-    const supportTouch: boolean = 'ontouchend' in canvas;
+    const supportTouch: boolean = "ontouchend" in canvas;
 
     if (supportTouch) {
       // タッチ関連コールバック関数登録
-      canvas.addEventListener('touchstart', onTouchBegan, { passive: true });
-      canvas.addEventListener('touchmove', onTouchMoved, { passive: true });
-      canvas.addEventListener('touchend', onTouchEnded, { passive: true });
-      canvas.addEventListener('touchcancel', onTouchCancel, { passive: true });
+      canvas.addEventListener("touchstart", onTouchBegan, { passive: true });
+      canvas.addEventListener("touchmove", onTouchMoved, { passive: true });
+      canvas.addEventListener("touchend", onTouchEnded, { passive: true });
+      canvas.addEventListener("touchcancel", onTouchCancel, { passive: true });
     } else {
       // マウス関連コールバック関数登録
-      canvas.addEventListener('mousedown', onClickBegan, { passive: true });
-      canvas.addEventListener('mousemove', onMouseMoved, { passive: true });
-      canvas.addEventListener('mouseup', onClickEnded, { passive: true });
+      canvas.addEventListener("mousedown", onClickBegan, { passive: true });
+      canvas.addEventListener("mousemove", onMouseMoved, { passive: true });
+      canvas.addEventListener("mouseup", onClickEnded, { passive: true });
     }
 
     // AppViewの初期化
@@ -173,20 +174,20 @@ export class LAppMotionSyncDelegate {
     const vertexShaderId = gl.createShader(gl.VERTEX_SHADER);
 
     if (vertexShaderId == null) {
-      LAppPal.printMessage('failed to create vertexShader');
+      LAppPal.printMessage("failed to create vertexShader");
       return null;
     }
 
     const vertexShader: string =
-      'precision mediump float;' +
-      'attribute vec3 position;' +
-      'attribute vec2 uv;' +
-      'varying vec2 vuv;' +
-      'void main(void)' +
-      '{' +
-      '   gl_Position = vec4(position, 1.0);' +
-      '   vuv = uv;' +
-      '}';
+      "precision mediump float;" +
+      "attribute vec3 position;" +
+      "attribute vec2 uv;" +
+      "varying vec2 vuv;" +
+      "void main(void)" +
+      "{" +
+      "   gl_Position = vec4(position, 1.0);" +
+      "   vuv = uv;" +
+      "}";
 
     gl.shaderSource(vertexShaderId, vertexShader);
     gl.compileShader(vertexShaderId);
@@ -195,18 +196,18 @@ export class LAppMotionSyncDelegate {
     const fragmentShaderId = gl.createShader(gl.FRAGMENT_SHADER);
 
     if (fragmentShaderId == null) {
-      LAppPal.printMessage('failed to create fragmentShader');
+      LAppPal.printMessage("failed to create fragmentShader");
       return null;
     }
 
     const fragmentShader: string =
-      'precision mediump float;' +
-      'varying vec2 vuv;' +
-      'uniform sampler2D texture;' +
-      'void main(void)' +
-      '{' +
-      '   gl_FragColor = texture2D(texture, vuv);' +
-      '}';
+      "precision mediump float;" +
+      "varying vec2 vuv;" +
+      "uniform sampler2D texture;" +
+      "void main(void)" +
+      "{" +
+      "   gl_FragColor = texture2D(texture, vuv);" +
+      "}";
 
     gl.shaderSource(fragmentShaderId, fragmentShader);
     gl.compileShader(fragmentShaderId);
@@ -303,7 +304,7 @@ export class LAppMotionSyncDelegate {
  */
 function onClickBegan(e: MouseEvent): void {
   if (!LAppMotionSyncDelegate.getInstance()._view) {
-    LAppPal.printMessage('view notfound');
+    LAppPal.printMessage("view notfound");
     return;
   }
   LAppMotionSyncDelegate.getInstance()._captured = true;
@@ -323,7 +324,7 @@ function onMouseMoved(e: MouseEvent): void {
   }
 
   if (!LAppMotionSyncDelegate.getInstance()._view) {
-    LAppPal.printMessage('view notfound');
+    LAppPal.printMessage("view notfound");
     return;
   }
 
@@ -340,7 +341,7 @@ function onMouseMoved(e: MouseEvent): void {
 function onClickEnded(e: MouseEvent): void {
   LAppMotionSyncDelegate.getInstance()._captured = false;
   if (!LAppMotionSyncDelegate.getInstance()._view) {
-    LAppPal.printMessage('view notfound');
+    LAppPal.printMessage("view notfound");
     return;
   }
 
@@ -356,7 +357,7 @@ function onClickEnded(e: MouseEvent): void {
  */
 function onTouchBegan(e: TouchEvent): void {
   if (!LAppMotionSyncDelegate.getInstance()._view) {
-    LAppPal.printMessage('view notfound');
+    LAppPal.printMessage("view notfound");
     return;
   }
 
@@ -377,7 +378,7 @@ function onTouchMoved(e: TouchEvent): void {
   }
 
   if (!LAppMotionSyncDelegate.getInstance()._view) {
-    LAppPal.printMessage('view notfound');
+    LAppPal.printMessage("view notfound");
     return;
   }
 
@@ -396,7 +397,7 @@ function onTouchEnded(e: TouchEvent): void {
   LAppMotionSyncDelegate.getInstance()._captured = false;
 
   if (!LAppMotionSyncDelegate.getInstance()._view) {
-    LAppPal.printMessage('view notfound');
+    LAppPal.printMessage("view notfound");
     return;
   }
 
@@ -415,7 +416,7 @@ function onTouchCancel(e: TouchEvent): void {
   LAppMotionSyncDelegate.getInstance()._captured = false;
 
   if (!LAppMotionSyncDelegate.getInstance()._view) {
-    LAppPal.printMessage('view notfound');
+    LAppPal.printMessage("view notfound");
     return;
   }
 

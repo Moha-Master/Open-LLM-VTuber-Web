@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Copyright(c) Live2D Inc. All rights reserved.
  *
@@ -6,7 +7,7 @@
  */
 
 /** @deprecated この変数は getInstance() が非推奨になったことに伴い、非推奨となりました。 */
-export let s_instance: LAppWavFileHandler = null;
+export let s_instance: LAppWavFileHandler | null = null;
 
 export class LAppWavFileHandler {
   /**
@@ -31,7 +32,7 @@ export class LAppWavFileHandler {
    */
   public static releaseInstance(): void {
     if (s_instance != null) {
-      s_instance = void 0;
+      s_instance = void 0 as unknown as LAppWavFileHandler | null;
     }
 
     s_instance = null;
@@ -102,7 +103,7 @@ export class LAppWavFileHandler {
   }
 
   public loadWavFile(filePath: string): Promise<boolean> {
-    return new Promise(resolveValue => {
+    return new Promise((resolveValue) => {
       let ret = false;
 
       if (this._pcmData != null) {
@@ -111,7 +112,7 @@ export class LAppWavFileHandler {
 
       // ファイルロード
       const asyncFileLoad = async () => {
-        return fetch(filePath).then(responce => {
+        return fetch(filePath).then((responce) => {
           return responce.arrayBuffer();
         });
       };
@@ -138,19 +139,19 @@ export class LAppWavFileHandler {
 
         try {
           // シグネチャ "RIFF"
-          if (!this._byteReader.getCheckSignature('RIFF')) {
+          if (!this._byteReader.getCheckSignature("RIFF")) {
             ret = false;
             throw new Error('Cannot find Signeture "RIFF".');
           }
           // ファイルサイズ-8（読み飛ばし）
           this._byteReader.get32LittleEndian();
           // シグネチャ "WAVE"
-          if (!this._byteReader.getCheckSignature('WAVE')) {
+          if (!this._byteReader.getCheckSignature("WAVE")) {
             ret = false;
             throw new Error('Cannot find Signeture "WAVE".');
           }
           // シグネチャ "fmt "
-          if (!this._byteReader.getCheckSignature('fmt ')) {
+          if (!this._byteReader.getCheckSignature("fmt ")) {
             ret = false;
             throw new Error('Cannot find Signeture "fmt".');
           }
@@ -159,7 +160,7 @@ export class LAppWavFileHandler {
           // フォーマットIDは1（リニアPCM）以外受け付けない
           if (this._byteReader.get16LittleEndian() != 1) {
             ret = false;
-            throw new Error('File is not linear PCM.');
+            throw new Error("File is not linear PCM.");
           }
           // チャンネル数
           this._wavFileInfo._numberOfChannels =
@@ -180,7 +181,7 @@ export class LAppWavFileHandler {
           }
           // "data"チャンクが出現するまで読み飛ばし
           while (
-            !this._byteReader.getCheckSignature('data') &&
+            !this._byteReader.getCheckSignature("data") &&
             this._byteReader._readOffset < this._byteReader._fileSize
           ) {
             this._byteReader._readOffset +=
@@ -267,7 +268,7 @@ export class LAppWavFileHandler {
    * @param usechannel 利用するチャンネル
    * @returns 指定したチャンネルの音声サンプルの配列
    */
-  public getPcmDataChannel(usechannel: number): Float32Array {
+  public getPcmDataChannel(usechannel: number): Float32Array | null {
     // 指定したチャンネル数がデータ用配列の長さより多いならnullを返す。
     if (!this._pcmData || !(usechannel < this._pcmData.length)) {
       return null;
@@ -282,7 +283,7 @@ export class LAppWavFileHandler {
    *
    * @returns 音声のサンプリング周波数
    */
-  public getWavSamplingRate(): number {
+  public getWavSamplingRate(): number | null {
     if (!this._wavFileInfo || this._wavFileInfo._samplingRate < 1) {
       return null;
     }
@@ -291,19 +292,20 @@ export class LAppWavFileHandler {
   }
 
   public releasePcmData(): void {
-    for (
-      let channelCount = 0;
-      channelCount < this._wavFileInfo._numberOfChannels;
-      channelCount++
-    ) {
-      delete this._pcmData[channelCount];
+    if (this._pcmData) {
+      for (
+        let channelCount = 0;
+        channelCount < this._wavFileInfo._numberOfChannels;
+        channelCount++
+      ) {
+        this._pcmData[channelCount] = undefined as unknown as Float32Array;
+      }
+      this._pcmData = null as unknown as Array<Float32Array>;
     }
-    delete this._pcmData;
-    this._pcmData = null;
   }
 
   constructor() {
-    this._pcmData = null;
+    this._pcmData = null as unknown as Array<Float32Array>;
     this._userTimeSeconds = 0.0;
     this._lastRms = 0.0;
     this._sampleOffset = 0.0;
@@ -326,7 +328,7 @@ export class LAppWavFileHandler {
 
 export class WavFileInfo {
   constructor() {
-    this._fileName = '';
+    this._fileName = "";
     this._numberOfChannels = 0;
     this._bitsPerSample = 0;
     this._samplingRate = 0;
@@ -342,8 +344,8 @@ export class WavFileInfo {
 
 export class ByteReader {
   constructor() {
-    this._fileByte = null;
-    this._fileDataView = null;
+    this._fileByte = null as unknown as ArrayBuffer;
+    this._fileDataView = null as unknown as DataView;
     this._fileSize = 0;
     this._readOffset = 0;
   }

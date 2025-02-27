@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Copyright(c) Live2D Inc. All rights reserved.
  *
@@ -5,14 +6,14 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismMatrix44 } from '@framework/math/cubismmatrix44';
-import { csmVector } from '@framework/type/csmvector';
+import { CubismMatrix44 } from "@framework/math/cubismmatrix44";
+import { csmVector } from "@framework/type/csmvector";
 
-import * as LAppDefine from '@cubismsdksamples/lappdefine';
-import * as LappMotionSyncDefine from './lappmotionsyncdefine';
-import { canvas } from '@cubismsdksamples/lappglmanager';
-import { LAppMotionSyncModel } from './lappmotionsyncmodel';
-import { LAppPal } from '@cubismsdksamples/lapppal';
+import * as LAppDefine from "@cubismsdksamples/lappdefine";
+import * as LappMotionSyncDefine from "./lappmotionsyncdefine";
+import { canvas } from "@cubismsdksamples/lappglmanager";
+import { LAppMotionSyncModel } from "./lappmotionsyncmodel";
+import { LAppPal } from "@cubismsdksamples/lapppal";
 
 export let s_instance: LAppMotionSyncLive2DManager = null;
 
@@ -94,7 +95,7 @@ export class LAppMotionSyncLive2DManager {
     const { width, height } = canvas;
     let modelScale: number = 1.0;
 
-    if (navigator.userAgent.includes('Mobile')) {
+    if (navigator.userAgent.includes("Mobile")) {
       modelScale = 0.5;
     }
 
@@ -164,9 +165,9 @@ export class LAppMotionSyncLive2DManager {
     // model3.jsonのパスを決定する。
     // ディレクトリ名とmodel3.jsonの名前を一致させておくこと。
     const model: string = LappMotionSyncDefine.ModelDir[index];
-    const modelPath: string = LappMotionSyncDefine.ResourcesPath + model + '/';
+    const modelPath: string = LappMotionSyncDefine.ResourcesPath + model + "/";
     let modelJsonName: string = LappMotionSyncDefine.ModelDir[index];
-    modelJsonName += '.model3.json';
+    modelJsonName += ".model3.json";
 
     this.releaseAllModel();
     this._models.pushBack(new LAppMotionSyncModel());

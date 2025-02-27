@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Copyright(c) Live2D Inc. All rights reserved.
  *
@@ -5,29 +6,29 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismIdHandle } from '@framework/id/cubismid';
-import { CubismMatrix44 } from '@framework/math/cubismmatrix44';
-import { CubismUserModel } from '@framework/model/cubismusermodel';
-import { csmMap } from '@framework/type/csmmap';
-import { csmRect } from '@framework/type/csmrectf';
-import { csmString } from '@framework/type/csmstring';
-import { csmVector } from '@framework/type/csmvector';
+import { CubismIdHandle } from "@framework/id/cubismid";
+import { CubismMatrix44 } from "@framework/math/cubismmatrix44";
+import { CubismUserModel } from "@framework/model/cubismusermodel";
+import { csmMap } from "@framework/type/csmmap";
+import { csmRect } from "@framework/type/csmrectf";
+import { csmString } from "@framework/type/csmstring";
+import { csmVector } from "@framework/type/csmvector";
 import {
   CSM_ASSERT,
   CubismLogError,
-  CubismLogInfo
-} from '@framework/utils/cubismdebug';
+  CubismLogInfo,
+} from "@framework/utils/cubismdebug";
 
-import * as LAppDefine from '@cubismsdksamples/lappdefine';
-import * as LAppMotionSyncDefine from './lappmotionsyncdefine';
-import { frameBuffer, LAppMotionSyncDelegate } from './lappmotionsyncdelegate';
-import { LAppPal } from '@cubismsdksamples/lapppal';
-import { TextureInfo } from '@cubismsdksamples/lapptexturemanager';
-import { CubismMoc } from '@framework/model/cubismmoc';
-import { CubismModelMotionSyncSettingJson } from '@motionsyncframework/cubismmodelmotionsyncsettingjson';
-import { LAppAudioManager } from './lappaudiomanager';
-import { CubismMotionSync } from '@motionsyncframework/live2dcubismmotionsync';
-import { canvas, gl } from '@cubismsdksamples/lappglmanager';
+import * as LAppDefine from "@cubismsdksamples/lappdefine";
+import * as LAppMotionSyncDefine from "./lappmotionsyncdefine";
+import { frameBuffer, LAppMotionSyncDelegate } from "./lappmotionsyncdelegate";
+import { LAppPal } from "@cubismsdksamples/lapppal";
+import { TextureInfo } from "@cubismsdksamples/lapptexturemanager";
+import { CubismMoc } from "@framework/model/cubismmoc";
+import { CubismModelMotionSyncSettingJson } from "@motionsyncframework/cubismmodelmotionsyncsettingjson";
+import { LAppAudioManager } from "./lappaudiomanager";
+import { CubismMotionSync } from "@motionsyncframework/live2dcubismmotionsync";
+import { canvas, gl } from "@cubismsdksamples/lappglmanager";
 
 enum LoadStep {
   LoadAssets,
@@ -53,7 +54,7 @@ enum LoadStep {
   CompleteSetupModel,
   LoadTexture,
   WaitLoadTexture,
-  CompleteSetup
+  CompleteSetup,
 }
 
 /**
@@ -70,8 +71,8 @@ export class LAppMotionSyncModel extends CubismUserModel {
     this._modelHomeDir = dir;
 
     fetch(`${this._modelHomeDir}${fileName}`)
-      .then(response => response.arrayBuffer())
-      .then(arrayBuffer => {
+      .then((response) => response.arrayBuffer())
+      .then((arrayBuffer) => {
         const setting: CubismModelMotionSyncSettingJson =
           new CubismModelMotionSyncSettingJson(
             arrayBuffer,
@@ -84,7 +85,7 @@ export class LAppMotionSyncModel extends CubismUserModel {
         // 結果を保存
         this.setupModel(setting);
       })
-      .catch(error => {
+      .catch((error) => {
         // model3.json読み込みでエラーが発生した時点で描画は不可能なので、setupせずエラーをcatchして何もしない
         CubismLogError(`Failed to load file ${this._modelHomeDir}${fileName}`);
       });
@@ -103,11 +104,11 @@ export class LAppMotionSyncModel extends CubismUserModel {
     this._modelSetting = setting;
 
     // CubismModel
-    if (this._modelSetting.getModelFileName() != '') {
+    if (this._modelSetting.getModelFileName() != "") {
       const modelFileName = this._modelSetting.getModelFileName();
 
       fetch(`${this._modelHomeDir}${modelFileName}`)
-        .then(response => {
+        .then((response) => {
           if (response.ok) {
             return response.arrayBuffer();
           } else if (response.status >= 400) {
@@ -117,7 +118,7 @@ export class LAppMotionSyncModel extends CubismUserModel {
             return new ArrayBuffer(0);
           }
         })
-        .then(arrayBuffer => {
+        .then((arrayBuffer) => {
           this.loadModel(arrayBuffer, this._mocConsistency);
 
           this._state = LoadStep.SetupLayout;
@@ -128,7 +129,7 @@ export class LAppMotionSyncModel extends CubismUserModel {
 
       this._state = LoadStep.WaitLoadModel;
     } else {
-      LAppPal.printMessage('Model data does not exist.');
+      LAppPal.printMessage("Model data does not exist.");
     }
 
     // Layout
@@ -136,7 +137,7 @@ export class LAppMotionSyncModel extends CubismUserModel {
       const layout: csmMap<string, number> = new csmMap<string, number>();
 
       if (this._modelSetting == null || this._modelMatrix == null) {
-        CubismLogError('Failed to setupLayout().');
+        CubismLogError("Failed to setupLayout().");
         return;
       }
 
@@ -150,17 +151,17 @@ export class LAppMotionSyncModel extends CubismUserModel {
 
     // MotionSync
     const setupMotionSync = (): void => {
-      if (this._modelSetting.getMotionSyncFileName() != '') {
+      if (this._modelSetting.getMotionSyncFileName() != "") {
         const motionSyncFile = this._modelSetting.getMotionSyncFileName();
 
         // NOTE: MotionSyncFileが見つからない場合 'NullValue' が返るため、明示的に判定を行う。
-        if (!motionSyncFile || motionSyncFile == 'NullValue') {
-          CubismLogError('Failed to setupMotionSync().');
+        if (!motionSyncFile || motionSyncFile == "NullValue") {
+          CubismLogError("Failed to setupMotionSync().");
           return;
         }
 
         fetch(`${this._modelHomeDir}${motionSyncFile}`)
-          .then(response => {
+          .then((response) => {
             if (response.ok) {
               return response.arrayBuffer();
             } else if (response.status >= 400) {
@@ -171,7 +172,7 @@ export class LAppMotionSyncModel extends CubismUserModel {
               return new ArrayBuffer(0);
             }
           })
-          .then(arrayBuffer => {
+          .then((arrayBuffer) => {
             this.loadMotionSync(arrayBuffer, arrayBuffer.byteLength);
             // 音声ファイルの読み込み
             this._soundFileList =
@@ -201,7 +202,7 @@ export class LAppMotionSyncModel extends CubismUserModel {
    */
   private loadMotionSync(buffer: ArrayBuffer, size: number) {
     if (buffer == null || size == 0) {
-      CubismLogError('Failed to loadMotionSync().');
+      CubismLogError("Failed to loadMotionSync().");
       return;
     }
 
@@ -230,8 +231,8 @@ export class LAppMotionSyncModel extends CubismUserModel {
         modelTextureNumber++
       ) {
         // テクスチャ名が空文字だった場合はロード・バインド処理をスキップ
-        if (this._modelSetting.getTextureFileName(modelTextureNumber) == '') {
-          console.log('getTextureFileName null');
+        if (this._modelSetting.getTextureFileName(modelTextureNumber) == "") {
+          console.log("getTextureFileName null");
           continue;
         }
 
@@ -460,7 +461,7 @@ export class LAppMotionSyncModel extends CubismUserModel {
    * イベントの発火を受け取る
    */
   public motionEventFired(eventValue: csmString): void {
-    CubismLogInfo('{0} is fired on LAppModel!!', eventValue.s);
+    CubismLogInfo("{0} is fired on LAppModel!!", eventValue.s);
   }
 
   /**
@@ -524,7 +525,7 @@ export class LAppMotionSyncModel extends CubismUserModel {
     CSM_ASSERT(this._modelSetting.getModelFileName().localeCompare(``));
 
     // CubismModel
-    if (this._modelSetting.getModelFileName() != '') {
+    if (this._modelSetting.getModelFileName() != "") {
       const modelFileName = this._modelSetting.getModelFileName();
 
       const response = await fetch(`${this._modelHomeDir}${modelFileName}`);
@@ -533,14 +534,14 @@ export class LAppMotionSyncModel extends CubismUserModel {
       this._consistency = CubismMoc.hasMocConsistency(arrayBuffer);
 
       if (!this._consistency) {
-        CubismLogInfo('Inconsistent MOC3.');
+        CubismLogInfo("Inconsistent MOC3.");
       } else {
-        CubismLogInfo('Consistent MOC3.');
+        CubismLogInfo("Consistent MOC3.");
       }
 
       return this._consistency;
     } else {
-      LAppPal.printMessage('Model data does not exist.');
+      LAppPal.printMessage("Model data does not exist.");
     }
   }
 

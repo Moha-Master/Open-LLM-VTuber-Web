@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable no-use-before-define */
 /* eslint-disable no-param-reassign */
@@ -58,6 +59,62 @@ function parseModelUrl(url: string): { baseUrl: string; modelDir: string; modelF
     return { baseUrl: '', modelDir: '', modelFileName: '' };
   }
 }
+
+/**
+ * Helper function to play audio and sync lip movement
+ * @param audioPath Path to audio file relative to Resources directory
+ * @param modelIndex Index of the model to animate (usually 0)
+ * @returns Promise that resolves when audio ends or rejects on error
+ */
+export const playAudioWithLipSync = (audioPath: string, modelIndex = 0): Promise<void> => new Promise((resolve, reject) => {
+  // Check if Live2D manager is available
+  // @ts-ignore
+  const live2dManager = window.LAppLive2DManager?.getInstance();
+  if (!live2dManager) {
+    reject(new Error('Live2D manager not initialized'));
+    return;
+  }
+
+  // Build full path
+  const fullPath = `/Resources/${audioPath}`;
+
+  // Create audio element
+  const audio = new Audio(fullPath);
+
+  // Set up event handlers
+  audio.addEventListener('canplaythrough', () => {
+    console.log(`Playing audio: ${fullPath}`);
+
+    // Get model and start lip sync
+    const model = live2dManager.getModel(modelIndex);
+    if (model) {
+      // @ts-ignore - Start lip sync with the audio file
+      if (model._wavFileHandler) {
+        // @ts-ignore
+        model._wavFileHandler.start(fullPath);
+
+        // Start playing audio
+        audio.play();
+      } else {
+        reject(new Error('Wav file handler not available on model'));
+      }
+    } else {
+      reject(new Error(`Model index ${modelIndex} not found`));
+    }
+  });
+
+  audio.addEventListener('ended', () => {
+    console.log('Audio playback completed');
+    resolve();
+  });
+
+  audio.addEventListener('error', () => {
+    reject(new Error(`Failed to load audio: ${fullPath}`));
+  });
+
+  // Start loading the audio
+  audio.load();
+});
 
 /**
  * Hook to handle Live2D model initialization and dragging
@@ -159,6 +216,16 @@ export const useLive2DModel = ({
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+  }, []);
+
+  // 在useEffect中添加对playAudioWithLipSync的暴露
+  useEffect(() => {
+    // Expose the audio playback function to window
+    (window as any).playLive2DAudioWithLipSync = playAudioWithLipSync;
+
+    return () => {
+      delete (window as any).playLive2DAudioWithLipSync;
+    };
   }, []);
 
   return {

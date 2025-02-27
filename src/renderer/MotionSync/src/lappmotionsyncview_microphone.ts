@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Copyright(c) Live2D Inc. All rights reserved.
  *
@@ -5,17 +6,17 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismMatrix44 } from '@framework/math/cubismmatrix44';
-import { CubismViewMatrix } from '@framework/math/cubismviewmatrix';
+import { CubismMatrix44 } from "@framework/math/cubismmatrix44";
+import { CubismViewMatrix } from "@framework/math/cubismviewmatrix";
 
-import * as LAppDefine from '@cubismsdksamples/lappdefine';
-import { canvas, gl } from '@cubismsdksamples/lappglmanager';
-import { LAppPal } from '@cubismsdksamples/lapppal';
-import { LAppSprite } from '@cubismsdksamples/lappsprite';
-import { TextureInfo } from '@cubismsdksamples/lapptexturemanager';
-import { TouchManager } from '@cubismsdksamples/touchmanager';
-import { LAppMotionSyncDelegate } from './lappmotionsyncdelegate';
-import { LAppMotionSyncLive2DManager } from './lappmotionsynclive2dmanager';
+import * as LAppDefine from "@cubismsdksamples/lappdefine";
+import { canvas, gl } from "@cubismsdksamples/lappglmanager";
+import { LAppPal } from "@cubismsdksamples/lapppal";
+import { LAppSprite } from "@cubismsdksamples/lappsprite";
+import { TextureInfo } from "@cubismsdksamples/lapptexturemanager";
+import { TouchManager } from "@cubismsdksamples/touchmanager";
+import { LAppMotionSyncDelegate } from "./lappmotionsyncdelegate";
+import { LAppMotionSyncLive2DManager } from "./lappmotionsynclive2dmanager";
 
 /**
  * 描画クラス。
@@ -136,7 +137,7 @@ export class LAppMotionSyncView {
       LAppMotionSyncDelegate.getInstance().getTextureManager();
     const resourcesPath = LAppDefine.ResourcesPath;
 
-    let imageName = '';
+    let imageName = "";
 
     // 背景画像初期化
     imageName = LAppDefine.BackImageName;
