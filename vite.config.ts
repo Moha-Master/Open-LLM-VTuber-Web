@@ -7,6 +7,7 @@ const createConfig = (outDir: string) => ({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src/renderer/src'),
+      '@framework': path.resolve(__dirname, './src/renderer/Framework/src'),
     },
   },
   root: path.join(__dirname, 'src/renderer'),
@@ -22,6 +23,7 @@ const createConfig = (outDir: string) => ({
     rollupOptions: {
       input: {
         main: path.join(__dirname, 'src/renderer/index.html'),
+        live2d: path.join(__dirname, 'src/renderer/index_live2d.html'),
       },
     },
   },

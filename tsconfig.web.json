@@ -4,6 +4,8 @@
     "src/renderer/src/env.d.ts",
     "src/renderer/src/**/*",
     "src/renderer/src/**/*.tsx",
+    "src/renderer/src/**/*.ts",
+    "src/renderer/live2d/**/*",
     "src/preload/*.d.ts",
     "src/renderer/public"
   ],
@@ -21,6 +23,9 @@
     "paths": {
       "@/*": [
         "src/renderer/src/*"
+      ],
+      "@framework/*": [
+        "src/renderer/Framework/src/*" 
       ]
     }
   }

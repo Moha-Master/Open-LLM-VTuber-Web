@@ -1,7 +1,7 @@
 import {
   createContext, useContext, useState, memo, useCallback, useMemo,
 } from 'react';
-import { Live2DModel } from 'pixi-live2d-display-lipsyncpatch';
+import { Live2DModel } from 'pixi-live2d-display-lipsync';
 
 /**
  * Live2D model context state interface

@@ -1,3 +1,4 @@
+/* eslint-disable no-shadow */
 // import { StrictMode } from 'react';
 import {
   Box, Flex, ChakraProvider, defaultSystem,
