@@ -8,9 +8,6 @@
 export let canvas: HTMLCanvasElement | null = null;
 export let gl: WebGLRenderingContext | null = null;
 export let s_instance: LAppGlManager | null = null;
-
-let mygl: WebGLRenderingContext | null = null;
-
 /**
  * Cubism SDKのサンプルで使用するWebGLを管理するクラス
  */
@@ -43,24 +40,9 @@ export class LAppGlManager {
   constructor() {
     // Use existing canvas instead of creating a new one
     canvas = document.getElementById('canvas') as HTMLCanvasElement;
-    if (!canvas) {
-      console.error('[DEBUG] Canvas element not found, creating a new one');
-      canvas = document.createElement('canvas');
-      canvas.style.backgroundColor = 'transparent';
-    } else {
-      console.log('[DEBUG] Found existing canvas element, using it');
-    }
 
     // Initialize WebGL context
     gl = canvas.getContext('webgl2', { alpha: true });
-    if (!gl) {
-      console.error('[DEBUG] Failed to get WebGL2 context');
-      // Try fallback to WebGL 1
-      gl = canvas.getContext('webgl', { alpha: true }) as WebGLRenderingContext;
-      if (!gl) {
-        console.error('[DEBUG] WebGL not supported');
-      }
-    }
   }
 
   /**

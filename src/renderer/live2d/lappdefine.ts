@@ -29,9 +29,25 @@ export const ViewLogicalMaxRight = 2.0;
 export const ViewLogicalMaxBottom = -2.0;
 export const ViewLogicalMaxTop = 2.0;
 
-// 相対パス
-// export const ResourcesPath = '../../Resources/';
-export const ResourcesPath = './Resources/';
+// Dynamic resource path that will be set by the model loader
+export let ResourcesPath = "";
+
+// Model directory and filename storage
+export let ModelDir: string[] = [];
+export let ModelFileNames: string[] = []; // New array to store model file names
+
+// Function to update model configuration with both directory and file name
+export function updateModelConfig(resourcePath: string, modelDirectory: string, modelFileName: string) {
+  console.log('Updating model config:', { resourcePath, modelDirectory, modelFileName });
+  ResourcesPath = resourcePath;
+  ModelDir = [modelDirectory];
+  ModelFileNames = [modelFileName]; // Store the actual model file name
+  // Update ModelDirSize when ModelDir changes
+  ModelDirSize = ModelDir.length;
+}
+
+// Export ModelDirSize as a variable instead of a constant
+export let ModelDirSize = ModelDir.length;
 
 // モデルの後ろにある背景の画像ファイル
 export const BackImageName = 'back_class_normal.png';
@@ -45,10 +61,6 @@ export const PowerImageName = 'CloseNormal.png';
 // モデル定義---------------------------------------------
 // モデルを配置したディレクトリ名の配列
 // ディレクトリ名とmodel3.jsonの名前を一致させておくこと
-export const ModelDir: string[] = [
-  'Hiyori',
-];
-export const ModelDirSize: number = ModelDir.length;
 
 // 外部定義ファイル（json）と合わせる
 // 外部定义文件（json）与之匹配

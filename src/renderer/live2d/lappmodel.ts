@@ -794,10 +794,8 @@ export class LAppModel extends CubismUserModel {
   }
 
   /**
-   * モーションデータをグループ名から一括でロードする。
-   * モーションデータの名前は内部でModelSettingから取得する。
-   *
-   * @param group モーションデータのグループ名
+   * Load motions for the model
+   * @param group Motion group name
    */
   public preLoadMotionGroup(group: string): void {
     for (let i = 0; i < this._modelSetting.getMotionCount(group); i++) {
@@ -819,10 +817,17 @@ export class LAppModel extends CubismUserModel {
             CubismLogError(
               `Failed to load file ${this._modelHomeDir}${motionFileName}`
             );
-            return new ArrayBuffer(0);
+            return null; // Return null instead of empty ArrayBuffer
           }
         })
         .then(arrayBuffer => {
+          // Add null check before loading motion
+          if (!arrayBuffer) {
+            // If buffer is null, reduce motion count and return
+            this._allMotionCount--;
+            return;
+          }
+
           const tmpMotion: CubismMotion = this.loadMotion(
             arrayBuffer,
             arrayBuffer.byteLength,
@@ -868,6 +873,11 @@ export class LAppModel extends CubismUserModel {
             // loadMotionできなかった場合はモーションの総数がずれるので1つ減らす
             this._allMotionCount--;
           }
+        })
+        .catch(error => {
+          // Add error handling
+          CubismLogError(`Failed to load motion: ${error}`);
+          this._allMotionCount--;
         });
     }
   }

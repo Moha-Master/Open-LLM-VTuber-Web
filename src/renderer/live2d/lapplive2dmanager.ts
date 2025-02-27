@@ -188,17 +188,21 @@ export class LAppLive2DManager {
       LAppPal.printMessage(`[APP]model index: ${this._sceneIndex}`);
     }
 
-    // ModelDir[]に保持したディレクトリ名から
-    // model3.jsonのパスを決定する。
-    // ディレクトリ名とmodel3.jsonの名前を一致させておくこと。
-    // 
-    // 从ModelDir[]中保留的目录名中
-    // 确定model3.json的路径。
-    // 请确保目录名与model3.json的名称匹配。
+    // Use the directory name and file name from our configuration
     const model: string = LAppDefine.ModelDir[index];
     const modelPath: string = LAppDefine.ResourcesPath + model + '/';
-    let modelJsonName: string = LAppDefine.ModelDir[index];
+    
+    // Use ModelFileNames if available, otherwise fall back to ModelDir
+    let modelJsonName: string = LAppDefine.ModelFileNames && 
+                                LAppDefine.ModelFileNames[index] ? 
+                                LAppDefine.ModelFileNames[index] : 
+                                LAppDefine.ModelDir[index];
+                                
     modelJsonName += '.model3.json';
+
+    if (LAppDefine.DebugLogEnable) {
+      LAppPal.printMessage(`[APP]model path: ${modelPath}${modelJsonName}`);
+    }
 
     this.releaseAllModel();
     this._models.pushBack(new LAppModel());

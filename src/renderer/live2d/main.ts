@@ -15,37 +15,27 @@ import { LAppLive2DManager } from './lapplive2dmanager';
  * Initialize the Live2D application
  */
 export function initializeLive2D(): void {
-  console.log('[DEBUG] Initializing Live2D manually');
+  console.log('Initializing Live2D with resourcePath:', LAppDefine.ResourcesPath);
+  console.log('Model directories:', LAppDefine.ModelDir);
 
-  const canvasElement = document.getElementById('canvas') as HTMLCanvasElement;
-  if (canvasElement) {
-    console.log('[DEBUG] Canvas dimensions:', {
-      clientWidth: canvasElement.clientWidth,
-      clientHeight: canvasElement.clientHeight,
-      offsetWidth: canvasElement.offsetWidth,
-      offsetHeight: canvasElement.offsetHeight,
-    });
+  // Clean up any existing instances first
+  if (LAppDelegate.getInstance()) {
+    // Release existing model resources
+    LAppLive2DManager.releaseInstance();
   }
 
-  console.log('[DEBUG] Resource path:', LAppDefine.ResourcesPath);
-  console.log('[DEBUG] Model directories:', LAppDefine.ModelDir);
-
-  // Initialize WebGL and create the application instance
   if (
     !LAppGlManager.getInstance() ||
     !LAppDelegate.getInstance().initialize()
   ) {
-    console.error('[DEBUG] Failed to initialize LAppGlManager or LAppDelegate');
+    console.error("Failed to initialize Live2D");
     return;
   }
 
-  console.log('[DEBUG] LAppDelegate initialized successfully, running now');
   LAppDelegate.getInstance().run();
 
-  // Only add mouse event listener in Electron environment
   if ((window as any).api?.setIgnoreMouseEvent) {
     const parent = document.getElementById('live2d');
-    console.log('[DEBUG] Setting up mouse events, parent element:', parent ? 'found' : 'not found');
 
     parent?.addEventListener("pointermove", (e) => {
       const model = LAppLive2DManager.getInstance().getModel(0);
@@ -69,7 +59,6 @@ export function initializeLive2D(): void {
 window.addEventListener(
   'load',
   (): void => {
-    console.log('[DEBUG] Window load event triggered in live2d/main.ts');
     initializeLive2D();
   },
   { passive: true },
