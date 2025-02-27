@@ -1,9 +1,9 @@
 /* eslint-disable no-underscore-dangle */
 import { useEffect, useCallback, RefObject } from 'react';
 import { ModelInfo } from '@/context/live2d-config-context';
-import { LAppDelegate } from '../../../live2d/lappdelegate';
-import { LAppLive2DManager } from '../../../live2d/lapplive2dmanager';
-import { CubismMatrix44 } from '../../../Framework/src/math/cubismmatrix44';
+import { LAppDelegate } from '../../../WebSDK/src/lappdelegate';
+import { LAppLive2DManager } from '../../../WebSDK/src/lapplive2dmanager';
+import { CubismMatrix44 } from '../../../WebSDK/Framework/src/math/cubismmatrix44';
 
 interface UseLive2DResizeProps {
   containerRef: RefObject<HTMLDivElement>;

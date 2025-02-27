@@ -1,2 +1,2 @@
-src/renderer/live2d/*
+src/renderer/WebSDK/**/*.ts
 

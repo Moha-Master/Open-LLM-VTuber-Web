@@ -8,7 +8,7 @@ import { ModelInfo, useLive2DConfig } from "@/context/live2d-config-context";
 import { useLive2DModel as useModelContext } from "@/context/live2d-model-context";
 import { AiStateEnum, useAiState } from "@/context/ai-state-context";
 import { toaster } from "@/components/ui/toaster";
-import { updateModelConfig } from '../../../live2d/lappdefine';
+import { updateModelConfig } from '../../../WebSDK/src/lappdefine';
 
 interface UseLive2DModelProps {
   isPet: boolean;
@@ -35,7 +35,7 @@ function parseModelUrl(url: string): { baseUrl: string; modelDir: string; modelF
 
     // Get full file name with extension (e.g., "name2.model3.json")
     const fullFileName = pathname.substring(lastSlashIndex + 1);
-    
+
     // Extract model file name without extension (e.g., "name2")
     const modelFileName = fullFileName.replace('.model3.json', '');
 
@@ -78,7 +78,7 @@ export const useLive2DModel = ({
   useEffect(() => {
     // Load Live2D initialization script
     const script = document.createElement('script');
-    script.src = './live2d/main.ts';
+    script.src = './WebSDK/src/main.ts';
     script.type = 'module';
 
     script.onload = () => {
@@ -113,7 +113,7 @@ export const useLive2DModel = ({
 
           // Update model configuration
           updateModelConfig(baseUrl, modelDir, modelFileName);
-          
+
           // Force model reload by reinitializing Live2D
           setTimeout(() => {
             if ((window as any).initializeLive2D) {
