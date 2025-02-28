@@ -9,6 +9,7 @@ import { audioTaskQueue } from '@/utils/task-queue';
 import { toaster } from '@/components/ui/toaster';
 import { useWebSocket } from '@/context/websocket-context';
 import { DisplayText } from '@/services/websocket-service';
+import { useLive2DExpression } from '@/hooks/canvas/use-live2d-expression';
 
 interface AudioTaskOptions {
   audioBase64: string
@@ -28,6 +29,7 @@ export const useAudioTask = () => {
   const { setSubtitleText } = useSubtitle();
   const { appendResponse, appendAIMessage } = useChatHistory();
   const { sendMessage } = useWebSocket();
+  const { setExpression } = useLive2DExpression();
 
   // Keep track of state in a ref to avoid stale closures
   const stateRef = useRef({
@@ -101,10 +103,20 @@ export const useAudioTask = () => {
           return;
         }
 
-        // Set expression if provided
-        // if (expressions?.[0] !== undefined) {
-        //   model.setExpression(expressions[0]);
-        // }
+        // Get LAppAdapter instance for expression handling
+        const lappAdapter = (window as any).getLAppAdapter?.();
+        if (!lappAdapter) {
+          console.error('LAppAdapter not found');
+        }
+
+        // Set expression if provided using LAppAdapter
+        if (expressions?.[0] !== undefined && lappAdapter) {
+          setExpression(
+            expressions[0],
+            lappAdapter,
+            `Set expression to: ${expressions[0]}`,
+          );
+        }
 
         // Create and set up audio element
         const audio = new Audio(audioDataUrl);
@@ -124,7 +136,6 @@ export const useAudioTask = () => {
               console.log('Applying enhanced lip sync handling for model');
               model._wavFileHandler._initialized = true;
 
-              // Create custom update function to enhance lip sync effect
               const originalUpdate = model._wavFileHandler.update.bind(model._wavFileHandler);
               model._wavFileHandler.update = function (deltaTimeSeconds: number) {
                 const result = originalUpdate(deltaTimeSeconds);

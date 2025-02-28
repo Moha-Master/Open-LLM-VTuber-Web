@@ -52,8 +52,21 @@ export function initializeLive2D(): void {
       const y = view?._deviceToScreen.transformY(e.y);
 
       // Check if mouse is over the Live2D model
-      // If not over model (false), we want to ignore mouse events (true)
       (window as any).api.setIgnoreMouseEvent(!model?.anyhitTest(x, y));
+    });
+
+    // Add pointerdown event listener
+    parent?.addEventListener("pointerdown", (e) => {
+      const model = LAppLive2DManager.getInstance().getModel(0);
+      const view = LAppDelegate.getInstance().getView();
+
+      // Transform screen coordinates to Live2D canvas coordinates
+      const x = view?._deviceToScreen.transformX(e.x);
+      const y = view?._deviceToScreen.transformY(e.y);
+
+      // Test hit and log result
+      const isHit = model?.anyhitTest(x, y);
+      console.log("Model clicked:", isHit);
     });
   }
 }

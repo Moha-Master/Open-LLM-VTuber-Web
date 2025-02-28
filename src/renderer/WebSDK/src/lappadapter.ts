@@ -95,5 +95,34 @@ export class LAppAdapter {
     this.getMgr()._models.at(0)?.loadAssets(modelPath, modelJsonName);
   }
 
+  /* model position manipulation */
+  
+  public getModelPosition(): { x: number, y: number } {
+    const model = this.getModel();
+    if (model && model._modelMatrix) {
+      const matrix = model._modelMatrix.getArray();
+      return {
+        x: matrix[12],
+        y: matrix[13]
+      };
+    }
+    return { x: 0, y: 0 };
+  }
+  
+  public setModelPosition(x: number, y: number): void {
+    const model = this.getModel();
+    if (model && model._modelMatrix) {
+      const matrix = model._modelMatrix.getArray();
+      
+      // Update the translation components
+      const newMatrix = [...matrix];
+      newMatrix[12] = x;
+      newMatrix[13] = y;
+      
+      // Set the matrix
+      model._modelMatrix.setMatrix(newMatrix);
+    }
+  }
+
   // private _live2DMgr: LAppLive2DManager;
 }

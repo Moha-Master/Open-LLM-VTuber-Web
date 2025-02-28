@@ -116,6 +116,10 @@ export class LAppModel extends CubismUserModel {
 
     this._modelSetting = setting;
 
+    // Log hit areas information
+    const hitAreasCount = this._modelSetting.getHitAreasCount();
+    console.log(`Model has ${hitAreasCount} hit areas`);
+
     // CubismModel
     if (this._modelSetting.getModelFileName() != "") {
       const modelFileName = this._modelSetting.getModelFileName();
@@ -785,18 +789,27 @@ export class LAppModel extends CubismUserModel {
     return false;
   }
 
+  /**
+   * Test if a point hits any part of the model
+   * @param x X coordinate to test
+   * @param y Y coordinate to test
+   */
   public anyhitTest(x: number, y: number): boolean {
     if (this._opacity < 1) {
       return false;
     }
 
     const count: number = this._modelSetting.getHitAreasCount();
+    
     for (let i = 0; i < count; i++) {
       const drawId: CubismIdHandle = this._modelSetting.getHitAreaId(i);
-      if (this.isHit(drawId, x, y)) {
+      const hit = this.isHit(drawId, x, y);
+      if (hit) {
+        console.log(`Hit detected in area ${i}`);
         return true;
       }
     }
+    
     return false;
   }
 
@@ -956,6 +969,105 @@ export class LAppModel extends CubismUserModel {
     } else {
       LAppPal.printMessage("Model data does not exist.");
     }
+  }
+
+  /**
+   * Test if a point hits the model's rendered area
+   * This is a fallback method when no hit areas are defined
+   * @param x X coordinate to test
+   * @param y Y coordinate to test
+   */
+  public isHitOnModel(x: number, y: number): boolean {
+    // Skip if model is transparent
+    if (this._opacity < 1) {
+      return false;
+    }
+
+    // Get drawable count
+    const drawableCount = this._model.getDrawableCount();
+    
+    // Get model matrix
+    const matrix = this._modelMatrix.getArray();
+    
+    // Calculate determinant
+    const det = 
+      matrix[0] * matrix[5] - 
+      matrix[1] * matrix[4];
+    
+    if (Math.abs(det) < 0.0001) {
+      return false; // Matrix is not invertible
+    }
+
+    // Calculate inverse matrix elements
+    const invDet = 1.0 / det;
+    const invMatrix = {
+      a: matrix[5] * invDet,
+      b: -matrix[1] * invDet,
+      c: -matrix[4] * invDet,
+      d: matrix[0] * invDet,
+      tx: (matrix[4] * matrix[13] - matrix[5] * matrix[12]) * invDet,
+      ty: (matrix[1] * matrix[12] - matrix[0] * matrix[13]) * invDet
+    };
+    
+    // Transform point
+    const transformedPoint = {
+      x: x * invMatrix.a + y * invMatrix.c + invMatrix.tx,
+      y: x * invMatrix.b + y * invMatrix.d + invMatrix.ty
+    };
+
+    // Check each drawable area
+    for (let i = 0; i < drawableCount; i++) {
+      // Skip if drawable is not visible
+      if (!this._model.getDrawableDynamicFlagIsVisible(i)) {
+        continue;
+      }
+
+      // Get drawable vertex positions
+      const vertices = this._model.getDrawableVertices(i);
+      
+      // Calculate bounds
+      let minX = vertices[0];
+      let minY = vertices[1];
+      let maxX = vertices[0];
+      let maxY = vertices[1];
+
+      for (let j = 2; j < vertices.length; j += 2) {
+        const vx = vertices[j];
+        const vy = vertices[j + 1];
+        minX = Math.min(minX, vx);
+        minY = Math.min(minY, vy);
+        maxX = Math.max(maxX, vx);
+        maxY = Math.max(maxY, vy);
+      }
+
+      // Check if point is inside bounds
+      if (
+        transformedPoint.x >= minX &&
+        transformedPoint.x <= maxX &&
+        transformedPoint.y >= minY &&
+        transformedPoint.y <= maxY
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Test if a point hits either a hit area or the model's rendered area
+   * @param x X coordinate to test
+   * @param y Y coordinate to test
+   */
+  public anyHitTestWithFallback(x: number, y: number): boolean {
+    // First try hit areas if they exist
+    const hitAreasCount = this._modelSetting.getHitAreasCount();
+    if (hitAreasCount > 0) {
+      return this.anyhitTest(x, y);
+    }
+    
+    // Fallback to checking if point hits the model's rendered area
+    return this.isHitOnModel(x, y);
   }
 
   /**

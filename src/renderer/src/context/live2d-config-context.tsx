@@ -69,6 +69,9 @@ export interface ModelInfo {
 
   /** Enable scroll to resize */
   scrollToResize?: boolean;
+
+  /** Initial scale */
+  initialScale?: number;
 }
 
 /**
@@ -233,6 +236,16 @@ export function Live2DConfigProvider({ children }: { children: React.ReactNode }
     }
   }, [isPet, modelInfo]);
   // Don't set confUid in the dependency beacause it will use old modelInfo to update.
+
+  // Add initial scale to model info
+  useEffect(() => {
+    if (modelInfo && !modelInfo.initialScale) {
+      setModelInfo({
+        ...modelInfo,
+        initialScale: 1.5, // Set your desired initial scale here
+      });
+    }
+  }, [modelInfo]);
 
   // Context value
   const contextValue = useMemo(

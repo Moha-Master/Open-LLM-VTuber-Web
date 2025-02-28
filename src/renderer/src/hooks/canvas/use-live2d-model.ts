@@ -10,6 +10,7 @@ import { useLive2DModel as useModelContext } from "@/context/live2d-model-contex
 import { AiStateEnum, useAiState } from "@/context/ai-state-context";
 import { toaster } from "@/components/ui/toaster";
 import { updateModelConfig } from '../../../WebSDK/src/lappdefine';
+import { LAppDelegate } from '../../../WebSDK/src/lappdelegate';
 
 interface UseLive2DModelProps {
   isPet: boolean;
@@ -126,7 +127,10 @@ export const useLive2DModel = ({
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
   const dragStartPos = useRef<Position>({ x: 0, y: 0 });
-  const elementStartPos = useRef<Position>({ x: 0, y: 0 });
+  const modelStartPos = useRef<Position>({ x: 0, y: 0 });
+
+  // Store reference to model's initial position
+  const modelPositionRef = useRef<Position>({ x: 0, y: 0 });
 
   // Keep track of the previous model URL
   const prevModelUrlRef = useRef<string | null>(null);
@@ -195,37 +199,185 @@ export const useLive2DModel = ({
     }
   }, [modelInfo?.url]);
 
-  // Dragging handlers
+  // Get and save current model position
+  const getModelPosition = useCallback(() => {
+    const adapter = (window as any).getLAppAdapter?.();
+    if (adapter) {
+      const model = adapter.getModel();
+      if (model && model._modelMatrix) {
+        // Access matrix values directly
+        // The translation is typically in elements [12] and [13] of the 4x4 matrix
+        const matrix = model._modelMatrix.getArray();
+        return {
+          x: matrix[12],
+          y: matrix[13],
+        };
+      }
+    }
+    return { x: 0, y: 0 };
+  }, []);
+
+  // Set model position function
+  const setModelPosition = useCallback((x: number, y: number) => {
+    const adapter = (window as any).getLAppAdapter?.();
+    if (adapter) {
+      const model = adapter.getModel();
+      if (model && model._modelMatrix) {
+        // Store current values
+        const matrix = model._modelMatrix.getArray();
+
+        // Create a new matrix with updated positions
+        const newMatrix = [...matrix];
+        newMatrix[12] = x;
+        newMatrix[13] = y;
+
+        // Set the matrix
+        model._modelMatrix.setMatrix(newMatrix);
+
+        // Save current position to reference
+        modelPositionRef.current = { x, y };
+      }
+    }
+  }, []);
+
+  // Initialize to get current model position
+  useEffect(() => {
+    // Short delay to ensure model is loaded
+    const timer = setTimeout(() => {
+      const currentPos = getModelPosition();
+      modelPositionRef.current = currentPos;
+      setPosition(currentPos);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [modelInfo?.url, getModelPosition]);
+
+  // Get canvas dimensions and scale ratio
+  const getCanvasScale = useCallback(() => {
+    const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+    if (!canvas) return { width: 1, height: 1, scale: 1 };
+
+    const { width } = canvas;
+    const { height } = canvas;
+    const scale = width / canvas.clientWidth; // Get actual device pixel ratio
+
+    return { width, height, scale };
+  }, []);
+
+  // Convert screen coordinates to model coordinates
+  const screenToModelPosition = useCallback((screenX: number, screenY: number) => {
+    const { width, height, scale } = getCanvasScale();
+
+    // Convert screen coordinates to range -1 to 1
+    const x = ((screenX * scale) / width) * 2 - 1;
+    const y = -((screenY * scale) / height) * 2 + 1;
+
+    return { x, y };
+  }, [getCanvasScale]);
+
+  // Mouse drag handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    setIsDragging(true);
-    dragStartPos.current = { x: e.clientX, y: e.clientY };
-    elementStartPos.current = position;
-  }, [position]);
+    const adapter = (window as any).getLAppAdapter?.();
+    if (adapter) {
+      const model = adapter.getModel();
+      const view = LAppDelegate.getInstance().getView();
+
+      if (!view || !model) return;
+
+      const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const scale = canvas.width / canvas.clientWidth;
+      const scaledX = x * scale;
+      const scaledY = y * scale;
+      const modelX = view._deviceToScreen.transformX(scaledX);
+      const modelY = view._deviceToScreen.transformY(scaledY);
+
+      // Check both hit areas and model bounds
+      const isHitArea = model.anyhitTest(modelX, modelY);
+      const isHitModel = model.isHitOnModel(modelX, modelY);
+
+      // Allow dragging if either test passes
+      if (isHitArea || isHitModel) {
+        setIsDragging(true);
+        dragStartPos.current = { x, y };
+
+        if (model._modelMatrix) {
+          const matrix = model._modelMatrix.getArray();
+          const currentPos = {
+            x: matrix[12],
+            y: matrix[13],
+          };
+          modelStartPos.current = currentPos;
+          modelPositionRef.current = currentPos;
+        }
+      }
+    }
+  }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging) return;
 
-    const dx = e.clientX - dragStartPos.current.x;
-    const dy = e.clientY - dragStartPos.current.y;
+    const adapter = (window as any).getLAppAdapter?.();
+    if (!adapter) return;
 
-    setPosition({
-      x: elementStartPos.current.x + dx,
-      y: elementStartPos.current.y + dy,
-    });
+    const model = adapter.getModel();
+    const view = LAppDelegate.getInstance().getView();
+    if (!view || !model) return;
+
+    // Get current mouse position in canvas
+    const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+    const rect = canvas.getBoundingClientRect();
+    const currentX = e.clientX - rect.left;
+    const currentY = e.clientY - rect.top;
+
+    // Convert both start and current positions to model coordinates
+    const scale = canvas.width / canvas.clientWidth;
+
+    // Convert start position
+    const startScaledX = dragStartPos.current.x * scale;
+    const startScaledY = dragStartPos.current.y * scale;
+    const startModelX = view._deviceToScreen.transformX(startScaledX);
+    const startModelY = view._deviceToScreen.transformY(startScaledY);
+
+    // Convert current position
+    const currentScaledX = currentX * scale;
+    const currentScaledY = currentY * scale;
+    const currentModelX = view._deviceToScreen.transformX(currentScaledX);
+    const currentModelY = view._deviceToScreen.transformY(currentScaledY);
+
+    // Calculate the difference in model coordinates
+    const dx = currentModelX - startModelX;
+    const dy = currentModelY - startModelY;
+
+    // Calculate new position by adding the difference to the start position
+    const newX = modelStartPos.current.x + dx;
+    const newY = modelStartPos.current.y + dy;
+
+    // Update model position
+    adapter.setModelPosition(newX, newY);
+    modelPositionRef.current = { x: newX, y: newY };
+    setPosition({ x: newX, y: newY });
   }, [isDragging]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-  }, []);
-
-  // 在useEffect中添加对playAudioWithLipSync的暴露
-  useEffect(() => {
-    // Expose the audio playback function to window
-    (window as any).playLive2DAudioWithLipSync = playAudioWithLipSync;
-
-    return () => {
-      delete (window as any).playLive2DAudioWithLipSync;
-    };
+    // Save final position when releasing mouse
+    const adapter = (window as any).getLAppAdapter?.();
+    if (adapter) {
+      const model = adapter.getModel();
+      if (model && model._modelMatrix) {
+        const matrix = model._modelMatrix.getArray();
+        const finalPos = {
+          x: matrix[12],
+          y: matrix[13],
+        };
+        modelPositionRef.current = finalPos;
+        modelStartPos.current = finalPos;
+        setPosition(finalPos);
+      }
+    }
   }, []);
 
   return {
@@ -235,7 +387,7 @@ export const useLive2DModel = ({
       onMouseDown: handleMouseDown,
       onMouseMove: handleMouseMove,
       onMouseUp: handleMouseUp,
-      onMouseLeave: handleMouseUp,
+      onMouseLeave: handleMouseUp, // Ensure position is saved when mouse leaves
     },
   };
 };
