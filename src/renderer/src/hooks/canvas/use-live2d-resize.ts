@@ -1,22 +1,51 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable no-underscore-dangle */
-import { useEffect, useCallback, RefObject, useRef } from 'react';
+import { useEffect, useCallback, RefObject, useRef, useState } from 'react';
 import { ModelInfo, useLive2DConfig } from '@/context/live2d-config-context';
 import { LAppDelegate } from '../../../WebSDK/src/lappdelegate';
 import { LAppLive2DManager } from '../../../WebSDK/src/lapplive2dmanager';
 import { CubismMatrix44 } from '../../../WebSDK/Framework/src/math/cubismmatrix44';
 
 // Constants for model scaling behavior
-const MIN_SCALE = 0.5;
+const MIN_SCALE = 0.1;
 const MAX_SCALE = 5.0;
 const EASING_FACTOR = 0.1; // Controls animation smoothness
 const EASING_THRESHOLD = 0.0001; // Minimum scale difference to continue animation
 const WHEEL_SCALE_STEP = 0.03; // Scale change per wheel tick
+const DEFAULT_SCALE = 1.0; // Default scale if not specified
 
 interface UseLive2DResizeProps {
   containerRef: RefObject<HTMLDivElement>;
   isPet: boolean;
   modelInfo?: ModelInfo;
 }
+
+/**
+ * Applies scale to both model and view matrices
+ * @param scale - The scale value to apply
+ */
+export const applyScale = (scale: number) => {
+  try {
+    const manager = LAppLive2DManager.getInstance();
+    if (!manager) return;
+
+    const model = manager.getModel(0);
+    if (!model) return;
+
+    // Update model matrix
+    // @ts-ignore
+    model._modelMatrix.scale(scale, scale);
+
+    // Update view matrix
+    const viewMatrix = new CubismMatrix44();
+    viewMatrix.scale(scale, scale);
+    manager.setViewMatrix(viewMatrix);
+
+    console.log('Applied scale:', scale);
+  } catch (error) {
+    console.debug('Model not ready for scaling yet');
+  }
+};
 
 /**
  * Hook to handle Live2D model resizing and scaling
@@ -32,40 +61,42 @@ export const useLive2DResize = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Initialize scale references
-  const initialScale = modelInfo?.initialScale || 1.0;
+  const initialScale = modelInfo?.kScale || DEFAULT_SCALE;
   const lastScaleRef = useRef<number>(initialScale);
   const targetScaleRef = useRef<number>(initialScale);
   const animationFrameRef = useRef<number>();
   const isAnimatingRef = useRef<boolean>(false);
   const hasAppliedInitialScale = useRef<boolean>(false);
 
-  /**
-   * Applies scale to both model and view matrices
-   * Includes error handling for when model is not ready
-   */
-  const applyScale = useCallback((scale: number) => {
-    try {
-      const manager = LAppLive2DManager.getInstance();
-      if (!manager) return;
+  // Track model visibility state
+  const [isModelVisible, setIsModelVisible] = useState(false);
 
-      const model = manager.getModel(0);
-      if (!model) return;
-
-      // Update model matrix
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      model._modelMatrix.scale(scale, scale);
-
-      // Update view matrix
-      const viewMatrix = new CubismMatrix44();
-      viewMatrix.scale(scale, scale);
-      manager.setViewMatrix(viewMatrix);
-
+  // Monitor modelInfo changes for initial scaling and visibility
+  useEffect(() => {
+    if (modelInfo) {
+      // Hide model immediately when URL changes
+      setIsModelVisible(false);
+      console.log(
+        "Model info changed, applying initial scale:",
+        modelInfo.kScale || DEFAULT_SCALE,
+      );
+      const scale = modelInfo.kScale || DEFAULT_SCALE;
       lastScaleRef.current = scale;
-    } catch (error) {
-      console.debug('Model not ready for scaling yet');
+      targetScaleRef.current = scale;
+
+      // Apply initial scale and show model after delay
+      const timer = setTimeout(() => {
+        applyScale(scale);
+        hasAppliedInitialScale.current = true;
+        updateModelScale(scale);
+        setTimeout(() => {
+          setIsModelVisible(true);
+        }, 100);
+      }, 500);
+
+      return () => clearTimeout(timer);
     }
-  }, []);
+  }, [modelInfo?.url]);
 
   /**
    * Smooth animation loop for scaling
@@ -90,7 +121,7 @@ export const useLive2DResize = ({
       updateModelScale(targetScale);
       isAnimatingRef.current = false;
     }
-  }, [applyScale, updateModelScale]);
+  }, [updateModelScale]);
 
   /**
    * Handles mouse wheel events for scaling
@@ -125,7 +156,7 @@ export const useLive2DResize = ({
   const handleResize = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     try {
       // Get dimensions based on mode
       const { width, height } = isPet
@@ -195,7 +226,7 @@ export const useLive2DResize = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [handleResize]);
 
-  return { canvasRef, handleResize };
+  return { canvasRef, handleResize, isModelVisible };
 };
 
 /**
