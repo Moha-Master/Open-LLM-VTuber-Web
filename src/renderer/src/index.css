@@ -1,7 +1,12 @@
+@font-face {
+    font-family: 'first-coffee';
+    src: url('/fonts/first-coffee.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
 body, html {
     margin: 0;
     padding: 0;
     overflow: hidden;
     background-color: transparent;
 }
-
