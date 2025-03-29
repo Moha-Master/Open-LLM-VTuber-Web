@@ -26,9 +26,9 @@ const Subtitle = memo((): JSX.Element | null => {
   if (!isLoaded || !subtitleText || !showSubtitle) return null;
 
   return (
-    <Box {...canvasStyles.subtitle.container}>
+     <Box {...canvasStyles.subtitle.container}>
       <SubtitleText text={subtitleText} />
-    </Box>
+     </Box>
   );
 });
 
