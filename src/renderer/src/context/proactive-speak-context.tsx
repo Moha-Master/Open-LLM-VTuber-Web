@@ -17,7 +17,7 @@ interface ProactiveSpeakContextType {
 }
 
 const defaultSettings: ProactiveSpeakSettings = {
-  allowProactiveSpeak: true,
+  allowProactiveSpeak: false,
   idleSecondsToSpeak: 3,
   allowButtonTrigger: true,
 };
